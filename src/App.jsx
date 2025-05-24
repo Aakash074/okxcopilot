@@ -3,6 +3,7 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import Landing from './Landing'
 import Chat from './Chat'
+import Portfolio from './Portfolio'
 import './App.css'
 import { Connection, Transaction, SystemProgram } from '@solana/web3.js'
 
@@ -10,6 +11,7 @@ import { Connection, Transaction, SystemProgram } from '@solana/web3.js'
 
 function App() {
   const [publicKey, setPublicKey] = useState(null)
+  const [externalMessage, setExternalMessage] = useState(null)
 
   const connectWallet = async () => {
     try {
@@ -22,6 +24,31 @@ function App() {
       console.error("Connection error:", error);
     }
   }
+
+  const disconnectWallet = async () => {
+    try {
+      const provider = window.okxwallet?.solana;
+      if (provider) {
+        await provider.disconnect();
+      }
+      setPublicKey(null);
+      setExternalMessage(null); // Clear any pending external messages
+      console.log("Wallet disconnected");
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      // Force disconnect even if there's an error
+      setPublicKey(null);
+      setExternalMessage(null);
+    }
+  }
+
+  const handleTokenAction = (message) => {
+    setExternalMessage(message);
+  };
+
+  const handleExternalMessageHandled = () => {
+    setExternalMessage(null);
+  };
 
   useEffect(() => {
     const provider = window.okxwallet?.solana;
@@ -51,16 +78,25 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Navbar wallet={publicKey} connectWallet={connectWallet} />
-      <main className="flex-1 flex flex-col items-center justify-center">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+      <Navbar wallet={publicKey} connectWallet={connectWallet} disconnectWallet={disconnectWallet} />
+      <main className="flex-1 flex overflow-hidden">
         {!publicKey ? (
-          <>
+          <div className="flex-1 flex flex-col items-center justify-center">
             <Landing connectWallet={connectWallet} />
             <button onClick={connectWallet} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">Connect OKX Wallet</button>
-          </>
+          </div>
         ) : (
-          <Chat wallet={publicKey} />
+          <div className="flex w-full h-full overflow-hidden">
+            {/* Portfolio - Left Half */}
+            <div className="w-1/2 h-full border-r border-gray-200 overflow-hidden">
+              <Portfolio wallet={publicKey} onTokenAction={handleTokenAction} />
+            </div>
+            {/* Chat - Right Half */}
+            <div className="w-1/2 h-full overflow-hidden">
+              <Chat wallet={publicKey} externalMessage={externalMessage} onExternalMessageHandled={handleExternalMessageHandled} />
+            </div>
+          </div>
         )}
       </main>
       {!publicKey && <Footer />}

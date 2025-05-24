@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Navbar({ wallet, connectWallet }) {
+function Navbar({ wallet, connectWallet, disconnectWallet }) {
   return (
     <nav className="w-full sticky top-0 z-30 bg-white/90 backdrop-blur shadow-sm flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-2 min-w-[120px]">
@@ -14,13 +14,27 @@ function Navbar({ wallet, connectWallet }) {
           <a href="#features" className="hover:text-purple-600 transition">Features</a>
         </div>
       </div>
-      <div className="flex items-center">
-        <button
-          onClick={connectWallet}
-          className="ml-4 px-5 py-2 bg-gradient-to-r from-purple-600 via-blue-500 to-green-400 text-white rounded-xl shadow-md hover:from-purple-700 hover:to-blue-600 transition text-base font-bold"
-        >
-          {wallet ? `Connected: ${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'Connect Wallet'}
-        </button>
+      <div className="flex items-center gap-3">
+        {wallet ? (
+          <>
+            <div className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-mono text-gray-700">
+              {wallet.slice(0, 6)}...{wallet.slice(-4)}
+            </div>
+            <button
+              onClick={disconnectWallet}
+              className="px-4 py-2 bg-red-500 text-white rounded-xl shadow-md hover:bg-red-600 transition text-sm font-semibold"
+            >
+              Disconnect
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="px-5 py-2 bg-gradient-to-r from-purple-600 via-blue-500 to-green-400 text-white rounded-xl shadow-md hover:from-purple-700 hover:to-blue-600 transition text-base font-bold"
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
     </nav>
   );
