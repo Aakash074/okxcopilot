@@ -1,0 +1,22 @@
+{
+  "strategies": [
+    {
+      "title": "Swap 50% of SOL to USDT",
+      "description": "Based on current market trends, diversifying into USDT can help reduce volatility.",
+      "fromToken": "SOL",
+      "toToken": "USDT",
+      "amount": "50%",
+      "estimatedToAmount": "24.7",
+      "actionId": "swap-sol-to-usdt-1"
+    },
+    {
+      "title": "Swap 100 USDC to JitoSOL",
+      "description": "JitoSOL is earning yield. Swapping idle USDC here could be profitable.",
+      "fromToken": "USDC",
+      "toToken": "JitoSOL",
+      "amount": "100",
+      "estimatedToAmount": "1.3",
+      "actionId": "swap-usdc-to-jitosol-2"
+    }
+  ]
+} 

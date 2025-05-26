@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { getStrategySuggestion } from './okxDexApi';
+import StrategyCards from './StrategyCards';
 
 function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
   const [messages, setMessages] = useState([
-    { from: 'bot', text: 'Welcome! How can I help you? Click on any token in your portfolio to get AI insights!' },
+    { from: 'bot', text: 'Welcome! How can I help you? Click on any token in your portfolio to get AI insights!', type: 'text' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,14 +23,21 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
     setMessages(prev => [...prev, { from: 'bot', text: 'Thinking...' }]);
     try {
       const reply = await getStrategySuggestion(messageText, { ...portfolio, wallet });
-      setMessages(prev => [
-        ...prev.slice(0, -1), // remove 'Thinking...'
-        { from: 'bot', text: reply || 'No suggestion available.' }
-      ]);
+      if (reply.type === 'json') {
+        setMessages(prev => [
+          ...prev.slice(0, -1), // remove 'Thinking...'
+          { from: 'bot', text: '', type: 'json', data: reply.data }
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev.slice(0, -1), // remove 'Thinking...'
+          { from: 'bot', text: reply.data || 'No suggestion available.', type: 'text' }
+        ]);
+      }
     } catch (err) {
       setMessages(prev => [
         ...prev.slice(0, -1),
-        { from: 'bot', text: 'Error: ' + (err.message || 'Failed to get suggestion.') }
+        { from: 'bot', text: 'Error: ' + (err.message || 'Failed to get suggestion.'), type: 'text' }
       ]);
     } finally {
       setLoading(false);
@@ -69,14 +77,21 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
     setMessages(prev => [...prev, { from: 'bot', text: 'Thinking...' }]);
     try {
       const reply = await getStrategySuggestion(currentInput, { ...portfolio, wallet });
-      setMessages(prev => [
-        ...prev.slice(0, -1), // remove 'Thinking...'
-        { from: 'bot', text: reply || 'No suggestion available.' }
-      ]);
+      if (reply.type === 'json') {
+        setMessages(prev => [
+          ...prev.slice(0, -1), // remove 'Thinking...'
+          { from: 'bot', text: '', type: 'json', data: reply.data }
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev.slice(0, -1), // remove 'Thinking...'
+          { from: 'bot', text: reply.data || 'No suggestion available.', type: 'text' }
+        ]);
+      }
     } catch (err) {
       setMessages(prev => [
         ...prev.slice(0, -1),
-        { from: 'bot', text: 'Error: ' + (err.message || 'Failed to get suggestion.') }
+        { from: 'bot', text: 'Error: ' + (err.message || 'Failed to get suggestion.'), type: 'text' }
       ]);
     } finally {
       setLoading(false);
@@ -102,15 +117,28 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
           <div ref={messagesTopRef} />
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[85%] px-4 py-2 rounded-2xl shadow-md text-sm break-words
-                  ${msg.from === 'user'
-                    ? 'bg-gradient-to-r from-purple-500 to-blue-400 text-white rounded-br-sm'
-                    : 'bg-white/80 text-gray-900 border border-gray-200 rounded-bl-sm'}
-                `}
-              >
-                {msg.text}
-              </div>
+              {msg.type === 'json' && msg.from === 'bot' ? (
+                <div className="max-w-[85%] w-full">
+                  <StrategyCards 
+                    strategies={msg.data?.strategies || []} 
+                    wallet={wallet}
+                    onSwapComplete={(strategy, signature) => {
+                      console.log('Swap completed:', strategy, signature);
+                      // Optionally add a confirmation message
+                    }}
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`max-w-[85%] px-4 py-2 rounded-2xl shadow-md text-sm break-words
+                    ${msg.from === 'user'
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-400 text-white rounded-br-sm'
+                      : 'bg-white/80 text-gray-900 border border-gray-200 rounded-bl-sm'}
+                  `}
+                >
+                  {msg.text}
+                </div>
+              )}
             </div>
           ))}
           <div ref={messagesEndRef} />
@@ -118,6 +146,42 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
         
         {/* Chat Input - Fixed at bottom */}
         <div className="px-6 py-4 border-t border-white/30 bg-white/20 backdrop-blur-sm">
+          {/* Test Button for Demo */}
+          <div className="mb-2">
+            <button
+              onClick={() => {
+                const testStrategies = {
+                  "strategies": [
+                    {
+                      "title": "Swap 50% of SOL to USDT",
+                      "description": "Based on current market trends, diversifying into USDT can help reduce volatility.",
+                      "fromToken": "SOL",
+                      "toToken": "USDT",
+                      "amount": "50%",
+                      "estimatedToAmount": "24.7",
+                      "actionId": "swap-sol-to-usdt-1"
+                    },
+                    {
+                      "title": "Swap 100 USDC to JitoSOL",
+                      "description": "JitoSOL is earning yield. Swapping idle USDC here could be profitable.",
+                      "fromToken": "USDC",
+                      "toToken": "JitoSOL",
+                      "amount": "100",
+                      "estimatedToAmount": "1.3",
+                      "actionId": "swap-usdc-to-jitosol-2"
+                    }
+                  ]
+                };
+                setMessages(prev => [...prev, 
+                  { from: 'user', text: 'Show me trading strategies', type: 'text' },
+                  { from: 'bot', text: '', type: 'json', data: testStrategies }
+                ]);
+              }}
+              className="text-xs px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition mr-2"
+            >
+              🧪 Test JSON Strategies
+            </button>
+          </div>
           <form onSubmit={sendMessage} className="flex gap-2">
             <input
               className="flex-1 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/80 text-sm shadow"

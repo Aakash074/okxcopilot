@@ -18,6 +18,13 @@ function getAuthHeaders(timestamp, method, requestPath, queryString = '') {
   const apiPassphrase = import.meta.env.VITE_OKX_API_PASSPHRASE;
   const projectId = import.meta.env.VITE_OKX_PROJECT_ID;
 
+  console.log('Environment check:', {
+    apiKey: apiKey ? `${apiKey.slice(0, 8)}...` : 'MISSING',
+    secretKey: secretKey ? `${secretKey.slice(0, 8)}...` : 'MISSING',
+    apiPassphrase: apiPassphrase ? `${apiPassphrase.slice(0, 4)}...` : 'MISSING',
+    projectId: projectId ? `${projectId.slice(0, 8)}...` : 'MISSING'
+  });
+
   if (!apiKey || !secretKey || !apiPassphrase || !projectId) {
     throw new Error('Missing OKX API credentials in environment variables');
   }
@@ -42,41 +49,60 @@ function getAuthHeaders(timestamp, method, requestPath, queryString = '') {
 
 /**
  * Fetch token price using OKX DEX API (quote endpoint)
- * @param {Object} params - { chainId, fromTokenAddress, toTokenAddress, amount, slippage }
+ * Testing confirmed all Solana token pairs work - only requires authentication
+ * @param {Object} params - { chainId, fromTokenAddress, toTokenAddress, amount }
  * @returns {Promise<Object>} - Quote data including token prices
  * @example
  *   const quote = await getTokenPrice({ 
- *     chainId: '1', 
- *     fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', 
- *     toTokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 
- *     amount: '1000000000000000000', 
- *     slippage: '0.5' 
+ *     chainId: '501', 
+ *     fromTokenAddress: '11111111111111111111111111111111', // SOL
+ *     toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC (tested working)
+ *     amount: '100000000' // 0.1 SOL (confirmed working amount)
  *   });
  */
-export async function getTokenPrice({ chainId, fromTokenAddress, toTokenAddress, amount, slippage = '0.5' }) {
+export async function getTokenPrice({ chainId, fromTokenAddress, toTokenAddress, amount }) {
   const timestamp = new Date().toISOString();
   const requestPath = '/api/v5/dex/aggregator/quote';
   const params = new URLSearchParams({
+    chainIndex: chainId, // Use chainIndex instead of chainId for newer API
     chainId,
     fromTokenAddress,
     toTokenAddress,
-    amount,
-    slippage
+    amount
   });
   const queryString = '?' + params.toString();
   
   const headers = getAuthHeaders(timestamp, 'GET', requestPath, queryString);
   
   try {
-    const { data } = await axios.get(`${OKX_BASE_URL}${requestPath}${queryString}`, { headers });
+    const { data } = await axios.get(`${OKX_BASE_URL}${requestPath}${queryString}`, { 
+      headers,
+      timeout: 10000 // 10 second timeout
+    });
     
     if (data.code !== '0') {
-      throw new Error(`OKX API Error: ${data.msg}`);
+      throw new Error(`OKX API Error: ${data.msg} (Code: ${data.code})`);
     }
     
-    return data.data[0];
+    // For quote endpoint, return the quote data with compatible format
+    const quoteData = data.data[0];
+    return {
+      fromTokenAmount: quoteData.fromTokenAmount,
+      toTokenAmount: quoteData.toTokenAmount,
+      toTokenDecimals: quoteData.toToken.decimal
+    };
   } catch (error) {
     console.error('Error fetching token price:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      
+      // Handle specific rate limiting error
+      if (error.response.status === 429 || 
+          (error.response.data && error.response.data.code === '50011')) {
+        throw new Error('Rate limit exceeded. Please try again in a few seconds.');
+      }
+    }
     throw error;
   }
 }
@@ -120,6 +146,10 @@ export async function simulateSwap({ chainId, fromTokenAddress, toTokenAddress, 
     return data.data[0];
   } catch (error) {
     console.error('Error simulating swap:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     throw error;
   }
 }
@@ -137,20 +167,46 @@ export async function getStrategySuggestion(prompt, portfolio) {
   // For Vite projects, use import.meta.env.VITE_PPLX_API_KEY
   const apiKey = import.meta.env.VITE_PPLX_API_KEY;
   if (!apiKey) throw new Error('Perplexity API key missing');
+  
+  // Determine if this is a strategy/trade request that should return JSON
+  const isStrategyRequest = prompt.toLowerCase().includes('strategy') || 
+                           prompt.toLowerCase().includes('trade') || 
+                           prompt.toLowerCase().includes('swap') ||
+                           prompt.toLowerCase().includes('opportunities');
+  
   const url = 'https://api.perplexity.ai/chat/completions';
+  
+  const systemContent = isStrategyRequest 
+    ? `You are a DeFi portfolio advisor. For trading strategy requests, respond ONLY with a valid JSON object in this exact format:
+{
+  "strategies": [
+    {
+      "title": "Strategy title",
+      "description": "Why this strategy makes sense",
+      "fromToken": "TOKEN_SYMBOL",
+      "toToken": "TOKEN_SYMBOL", 
+      "amount": "percentage or amount",
+      "estimatedToAmount": "estimated amount",
+      "actionId": "unique-id"
+    }
+  ]
+}
+Provide 1-3 realistic trading strategies based on current market conditions. Use token symbols from the user's portfolio.`
+    : `You are a DeFi portfolio advisor. For analysis and price prediction requests, provide detailed text responses with specific insights about market conditions, price analysis, and recommendations.`;
+
   const body = {
     model: 'pplx-70b-online',
     messages: [
       {
         role: 'system',
-        content: 'You are a DeFi portfolio advisor. Provide specific, actionable trading advice based on current market conditions. Always include percentages and token names in your recommendations.'
+        content: systemContent
       },
       {
         role: 'user',
         content: `Portfolio: ${JSON.stringify(portfolio)}. Question: ${prompt}`
       }
     ],
-    max_tokens: 200
+    max_tokens: isStrategyRequest ? 300 : 200
   };
   
   try {
@@ -160,7 +216,23 @@ export async function getStrategySuggestion(prompt, portfolio) {
         'Content-Type': 'application/json'
       }
     });
-    return data.choices[0].message.content;
+    
+    const response = data.choices[0].message.content;
+    
+    // For strategy requests, try to parse as JSON, fallback to text if invalid
+    if (isStrategyRequest) {
+      try {
+        const parsed = JSON.parse(response);
+        if (parsed.strategies && Array.isArray(parsed.strategies)) {
+          return { type: 'json', data: parsed };
+        }
+      } catch {
+        // If JSON parsing fails, return as text
+        console.warn('Failed to parse strategy response as JSON, returning as text');
+      }
+    }
+    
+    return { type: 'text', data: response };
   } catch (error) {
     console.error('Error getting strategy suggestion:', error);
     throw error;
@@ -207,6 +279,10 @@ export async function performSwap(tokenIn, tokenOut, amount, { chainId, slippage
     };
   } catch (error) {
     console.error('Error performing swap:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     throw error;
   }
 }
@@ -253,6 +329,10 @@ export async function estimateSwapGas(tokenIn, tokenOut, amount, { chainId, slip
     };
   } catch (error) {
     console.error('Error estimating gas:', error);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+    }
     throw error;
   }
 }

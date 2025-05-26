@@ -78,13 +78,12 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+    <div className={`flex flex-col bg-gray-50 ${publicKey ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
       <Navbar wallet={publicKey} connectWallet={connectWallet} disconnectWallet={disconnectWallet} />
-      <main className="flex-1 flex overflow-hidden">
+      <main className={`flex-1 flex ${publicKey ? 'overflow-hidden' : ''}`}>
         {!publicKey ? (
-          <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="flex-1 overflow-y-auto">
             <Landing connectWallet={connectWallet} />
-            <button onClick={connectWallet} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">Connect OKX Wallet</button>
           </div>
         ) : (
           <div className="flex w-full h-full overflow-hidden">
