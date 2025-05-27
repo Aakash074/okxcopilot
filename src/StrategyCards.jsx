@@ -1,16 +1,25 @@
 import React, { useState } from 'react';
 import { performSwap } from './okxDexApi';
+import { Connection, VersionedTransaction, Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 
-function StrategyCards({ strategies, wallet, onSwapComplete }) {
+// Initialize Solana connection using public RPC endpoint
+const SOLANA_RPC_ENDPOINT = 'https://solana-rpc.publicnode.com';
+const connection = new Connection(SOLANA_RPC_ENDPOINT, {
+  commitment: 'confirmed',
+  confirmTransactionInitialTimeout: 5000
+});
+
+function StrategyCards({ strategies, wallet, onSwapComplete, portfolio }) {
   const [loadingSwaps, setLoadingSwaps] = useState({});
 
   const CHAIN_ID = '501'; // Solana mainnet (correct OKX chainId)
   
-  // Token addresses mapping
+  // Token addresses mapping - Standardized USDT
   const TOKEN_ADDRESSES = {
     'SOL': '11111111111111111111111111111111',
-    'USDT': 'Es9vMFrzaCERmqrGfGYpVeKWiNL5NqL7Edhgqk2z9kZi',
-    'USDC': 'EPjFWdd5AufqSSqeM2qN3N3k5HHJh8N8HhjjHgU9h5FR',
+    'USDT': 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // Standardized USDT address
+    'USDC': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // Corrected USDC based on Chat.jsx
     'wBTC': '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
     'wETH': '7vfCXTUXx8kP4HT8YhJPgJ7Y4w6vjbQfgFQQs1nCJ3Kn',
     'wBNB': '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
@@ -43,16 +52,20 @@ function StrategyCards({ strategies, wallet, onSwapComplete }) {
         throw new Error(`Unsupported token: ${strategy.fromToken} or ${strategy.toToken}`);
       }
 
+      const decimals = TOKEN_DECIMALS[strategy.fromToken] || 9; // Get decimals for fromToken
+
       // Convert amount to minimal units
       let amountInMinimalUnits;
       if (strategy.amount.includes('%')) {
-        // For percentage-based amounts, we'd need to fetch current balance
-        // For now, using a placeholder amount
         const percentage = parseFloat(strategy.amount.replace('%', ''));
-        amountInMinimalUnits = (1000000 * percentage / 100).toString(); // Placeholder
+        const tokenBalance = portfolio[strategy.fromToken]; // Get balance from portfolio
+        if (tokenBalance === undefined || tokenBalance === null) {
+          throw new Error(`Balance for ${strategy.fromToken} not found in portfolio.`);
+        }
+        const balanceInMinimalUnits = tokenBalance * Math.pow(10, decimals);
+        amountInMinimalUnits = (balanceInMinimalUnits * percentage / 100).toString();
       } else {
         const amount = parseFloat(strategy.amount);
-        const decimals = TOKEN_DECIMALS[strategy.fromToken] || 9;
         amountInMinimalUnits = (amount * Math.pow(10, decimals)).toString();
       }
 
@@ -68,15 +81,25 @@ function StrategyCards({ strategies, wallet, onSwapComplete }) {
         }
       );
 
-      // Execute the transaction using OKX wallet
+      // Execute the swap on Solana: decode & prepare transaction
       const provider = window.okxwallet.solana;
-      const transaction = swapData.transactionPayload || swapData.tx; // The transaction data from OKX API
-      
-      console.log('Transaction data:', transaction);
-      
-      // Sign and send transaction
-      const signature = await provider.signAndSendTransaction(transaction);
-      
+      const callData = swapData.transactionPayload.data; // base58 encoded transaction payload
+      const decoded = bs58.decode(callData);
+      const { blockhash } = await connection.getLatestBlockhash();
+      let txObject;
+      try {
+        txObject = VersionedTransaction.deserialize(decoded);
+        txObject.message.recentBlockhash = blockhash;
+      } catch {
+        txObject = Transaction.from(decoded);
+        txObject.recentBlockhash = blockhash;
+        txObject.feePayer = provider.publicKey;
+      }
+      console.log('Prepared Solana transaction:', txObject);
+      // Sign and send via OKX wallet
+      const result = await provider.signAndSendTransaction(txObject);
+      const signature = result.signature || result;
+
       console.log('Transaction successful:', signature);
       alert(`Swap completed! Transaction: ${signature}`);
       

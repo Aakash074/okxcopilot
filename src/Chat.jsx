@@ -270,6 +270,7 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
                   <StrategyCards 
                     strategies={msg.data?.strategies || []} 
                     wallet={wallet}
+                    portfolio={portfolio}
                     onSwapComplete={(strategy, signature) => {
                       console.log('Swap completed:', strategy, signature);
                       // Optionally add a confirmation message
