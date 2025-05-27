@@ -1,10 +1,15 @@
 import React from 'react';
+import okxcopilotLogo from './assets/okxcopilot.png';
 
 function Navbar({ wallet, connectWallet, disconnectWallet }) {
   return (
     <nav className="w-full sticky top-0 z-30 bg-white/90 backdrop-blur shadow-sm flex items-center justify-between px-6 py-3">
-      <div className="flex items-center gap-2 min-w-[120px]">
-        <img src="/okx-logo.svg" alt="OKX Copilot" className="h-8 w-8 object-contain" onError={e => { e.target.style.display = 'none'; }} />
+      <div className="flex items-center gap-3 min-w-[120px]">
+        <img 
+          src={okxcopilotLogo} 
+          alt="OKX Copilot" 
+          className="h-10 w-10 object-contain rounded-lg shadow-sm" 
+        />
         <span className="text-xl font-extrabold text-gray-900 tracking-tight hidden sm:inline">OKX Copilot</span>
       </div>
       <div className="flex-1 flex justify-center">

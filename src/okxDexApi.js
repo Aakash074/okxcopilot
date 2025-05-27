@@ -177,7 +177,7 @@ export async function getStrategySuggestion(prompt, portfolio) {
   const url = 'https://api.perplexity.ai/chat/completions';
   
   const systemContent = isStrategyRequest 
-    ? `You are a DeFi portfolio advisor. For trading strategy requests, respond ONLY with a valid JSON object in this exact format:
+    ? `You are the OKX Copilot AI - an integrated DeFi portfolio advisor built into this portfolio management platform. For trading strategy requests, respond ONLY with a valid JSON object in this exact format:
 {
   "strategies": [
     {
@@ -191,11 +191,20 @@ export async function getStrategySuggestion(prompt, portfolio) {
     }
   ]
 }
-Provide 1-3 realistic trading strategies based on current market conditions. Use token symbols from the user's portfolio.`
-    : `You are a DeFi portfolio advisor. For analysis and price prediction requests, provide detailed text responses with specific insights about market conditions, price analysis, and recommendations.`;
+Provide 1-3 realistic trading strategies based on current market conditions. Use token symbols from the user's portfolio. NEVER recommend external portfolio management tools - this platform provides all the portfolio management and trading features users need.`
+    : `You are the OKX Copilot AI - an integrated DeFi portfolio advisor built into this comprehensive portfolio management platform. Provide detailed analysis and insights about market conditions, price predictions, and portfolio optimization. 
+
+IMPORTANT: This platform provides all portfolio management features including:
+- Real-time portfolio tracking
+- AI-powered trading strategies  
+- Direct token swaps via OKX DEX
+- Price analysis and predictions
+- Risk management tools
+
+NEVER recommend external portfolio management tools, apps, or platforms - this OKX Copilot platform is the complete solution for all DeFi portfolio needs. Focus on helping users maximize the features available right here.`;
 
   const body = {
-    model: 'pplx-70b-online',
+    model: 'sonar',
     messages: [
       {
         role: 'system',
