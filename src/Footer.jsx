@@ -1,20 +1,20 @@
 import React from 'react';
 
-function Footer() {
+function Footer({ isDarkMode }) {
   return (
-    <footer className="w-full bg-gray-500 border-t py-4 px-4 flex flex-col items-center gap-2 mt-8">
+    <footer className={`w-full ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-gray-500 border-gray-300'} border-t py-4 px-4 flex flex-col items-center gap-2 mt-8`}>
       <div className="flex gap-4 mb-1">
-        <a href="https://x.com/okx" target="_blank" rel="noopener noreferrer" aria-label="X" className="hover:text-blue-600 transition">
+        <a href="https://x.com/okx" target="_blank" rel="noopener noreferrer" aria-label="X" className={`${isDarkMode ? 'text-gray-300 hover:text-blue-400' : 'text-gray-100 hover:text-blue-600'} transition`}>
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.53 2.47a2.5 2.5 0 0 1 3.54 3.54l-5.47 5.47 5.47 5.47a2.5 2.5 0 0 1-3.54 3.54l-5.47-5.47-5.47 5.47a2.5 2.5 0 0 1-3.54-3.54l5.47-5.47-5.47-5.47A2.5 2.5 0 0 1 6.59 2.47l5.47 5.47 5.47-5.47z"/></svg>
         </a>
-        <a href="https://discord.gg/okx" target="_blank" rel="noopener noreferrer" aria-label="Discord" className="hover:text-indigo-600 transition">
+        <a href="https://discord.gg/okx" target="_blank" rel="noopener noreferrer" aria-label="Discord" className={`${isDarkMode ? 'text-gray-300 hover:text-indigo-400' : 'text-gray-100 hover:text-indigo-600'} transition`}>
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.369A19.791 19.791 0 0 0 16.885 3.1a.117.117 0 0 0-.124.06c-.537.96-1.13 2.22-1.552 3.2a18.524 18.524 0 0 0-5.418 0c-.423-.98-1.016-2.24-1.553-3.2a.117.117 0 0 0-.124-.06A19.736 19.736 0 0 0 3.684 4.369a.105.105 0 0 0-.048.043C.533 9.09-.32 13.58.099 18.021a.12.12 0 0 0 .045.083c1.9 1.39 3.743 2.23 5.555 2.785a.116.116 0 0 0 .127-.043c.427-.588.807-1.204 1.134-1.85a.112.112 0 0 0-.062-.155c-.607-.23-1.185-.51-1.74-.825a.117.117 0 0 1-.012-.195c.117-.088.234-.18.346-.274a.112.112 0 0 1 .12-.013c3.68 1.68 7.647 1.68 11.293 0a.112.112 0 0 1 .121.012c.112.094.229.186.346.274a.117.117 0 0 1-.011.195c-.555.315-1.133.595-1.74.825a.112.112 0 0 0-.062.155c.327.646.707 1.262 1.134 1.85a.116.116 0 0 0 .127.043c1.812-.555 3.655-1.395 5.555-2.785a.115.115 0 0 0 .045-.083c.5-5.177-.838-9.637-3.537-13.609a.104.104 0 0 0-.048-.043zM8.02 15.331c-1.085 0-1.977-.993-1.977-2.215 0-1.221.875-2.214 1.977-2.214 1.104 0 1.997.993 1.997 2.214 0 1.222-.893 2.215-1.997 2.215zm7.96 0c-1.085 0-1.977-.993-1.977-2.215 0-1.221.875-2.214 1.977-2.214 1.104 0 1.997.993 1.997 2.214 0 1.222-.893 2.215-1.997 2.215z"/></svg>
         </a>
-        <a href="https://github.com/okx" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="hover:text-gray-800 transition">
+        <a href="https://github.com/okx" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className={`${isDarkMode ? 'text-gray-300 hover:text-gray-100' : 'text-gray-100 hover:text-gray-800'} transition`}>
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.339-2.221-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.254-.446-1.272.098-2.652 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.38.202 2.398.1 2.652.64.7 1.028 1.595 1.028 2.688 0 3.847-2.337 4.695-4.566 4.944.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .267.18.577.688.48C19.138 20.2 22 16.448 22 12.021 22 6.484 17.523 2 12 2z"/></svg>
         </a>
       </div>
-      <div className="text-xs text-gray-100">&copy; {new Date().getFullYear()} OKX Copilot. All rights reserved.</div>
+      <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-100'}`}>&copy; {new Date().getFullYear()} OKX Copilot. All rights reserved.</div>
     </footer>
   );
 }

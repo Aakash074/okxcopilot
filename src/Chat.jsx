@@ -7,10 +7,12 @@ import StrategyCards from './StrategyCards';
 import 'highlight.js/styles/github.css';
 
 // Component to render markdown content with proper styling
-const MarkdownMessage = ({ content, isUser }) => {
+const MarkdownMessage = ({ content, isUser, isDarkMode }) => {
   const baseClasses = `max-w-[85%] px-4 py-2 rounded-2xl shadow-md text-sm break-words`;
   const userClasses = `bg-gradient-to-r from-purple-500 to-blue-400 text-white rounded-br-sm`;
-  const botClasses = `bg-white/80 text-gray-900 border border-gray-200 rounded-bl-sm`;
+  const botClasses = isDarkMode 
+    ? `bg-gray-800/80 text-gray-100 border border-gray-600 rounded-bl-sm`
+    : `bg-white/80 text-gray-900 border border-gray-200 rounded-bl-sm`;
   
   return (
     <div className={`${baseClasses} ${isUser ? userClasses : botClasses}`}>
@@ -19,37 +21,37 @@ const MarkdownMessage = ({ content, isUser }) => {
         rehypePlugins={[rehypeHighlight]}
         components={{
           // Custom styling for markdown elements
-          h1: ({ children }) => <h1 className={`text-lg font-bold mb-2 ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</h1>,
-          h2: ({ children }) => <h2 className={`text-md font-bold mb-2 ${isUser ? 'text-white' : 'text-gray-800'}`}>{children}</h2>,
-          h3: ({ children }) => <h3 className={`text-sm font-bold mb-1 ${isUser ? 'text-white' : 'text-gray-700'}`}>{children}</h3>,
-          p: ({ children }) => <p className={`mb-2 last:mb-0 ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</p>,
-          ul: ({ children }) => <ul className={`list-disc list-inside mb-2 ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</ul>,
-          ol: ({ children }) => <ol className={`list-decimal list-inside mb-2 ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</ol>,
-          li: ({ children }) => <li className={`mb-1 ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</li>,
-          strong: ({ children }) => <strong className={`font-bold ${isUser ? 'text-white' : 'text-gray-900'}`}>{children}</strong>,
-          em: ({ children }) => <em className={`italic ${isUser ? 'text-white' : 'text-gray-800'}`}>{children}</em>,
+          h1: ({ children }) => <h1 className={`text-lg font-bold mb-2 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</h1>,
+          h2: ({ children }) => <h2 className={`text-md font-bold mb-2 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-200' : 'text-gray-800')}`}>{children}</h2>,
+          h3: ({ children }) => <h3 className={`text-sm font-bold mb-1 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-300' : 'text-gray-700')}`}>{children}</h3>,
+          p: ({ children }) => <p className={`mb-2 last:mb-0 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</p>,
+          ul: ({ children }) => <ul className={`list-disc list-inside mb-2 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</ul>,
+          ol: ({ children }) => <ol className={`list-decimal list-inside mb-2 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</ol>,
+          li: ({ children }) => <li className={`mb-1 ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</li>,
+          strong: ({ children }) => <strong className={`font-bold ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-100' : 'text-gray-900')}`}>{children}</strong>,
+          em: ({ children }) => <em className={`italic ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-200' : 'text-gray-800')}`}>{children}</em>,
           code: ({ children, className }) => {
             const isBlock = className?.includes('language-');
             if (isBlock) {
               return (
-                <code className={`block bg-gray-100 rounded p-2 my-2 text-gray-800 text-xs overflow-x-auto ${className || ''}`}>
+                <code className={`block ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'} rounded p-2 my-2 text-xs overflow-x-auto ${className || ''}`}>
                   {children}
                 </code>
               );
             }
             return (
-              <code className={`${isUser ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-800'} px-1 py-0.5 rounded text-xs`}>
+              <code className={`${isUser ? 'bg-white/20 text-white' : (isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800')} px-1 py-0.5 rounded text-xs`}>
                 {children}
               </code>
             );
           },
           pre: ({ children }) => (
-            <pre className="bg-gray-100 rounded p-2 my-2 text-gray-800 text-xs overflow-x-auto">
+            <pre className={`${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'} rounded p-2 my-2 text-xs overflow-x-auto`}>
               {children}
             </pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className={`border-l-4 ${isUser ? 'border-white/30 bg-white/10' : 'border-gray-300 bg-gray-50'} pl-3 py-1 my-2 italic ${isUser ? 'text-white' : 'text-gray-700'}`}>
+            <blockquote className={`border-l-4 ${isUser ? 'border-white/30 bg-white/10' : (isDarkMode ? 'border-gray-500 bg-gray-700/30' : 'border-gray-300 bg-gray-50')} pl-3 py-1 my-2 italic ${isUser ? 'text-white' : (isDarkMode ? 'text-gray-300' : 'text-gray-700')}`}>
               {children}
             </blockquote>
           ),
@@ -66,7 +68,7 @@ const MarkdownMessage = ({ content, isUser }) => {
   );
 };
 
-function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
+function Chat({ wallet, externalMessage, onExternalMessageHandled, isDarkMode }) {
   const [messages, setMessages] = useState([
     { from: 'bot', text: 'Welcome! How can I help you? Click on any token in your portfolio to get AI insights!', type: 'text' },
   ]);
@@ -247,15 +249,15 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-white via-blue-50 to-purple-100">
+    <div className={`flex flex-col h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700' : 'bg-gradient-to-br from-white via-blue-50 to-purple-100'}`}>
       <div className="flex flex-col h-full">
         {/* Header - Fixed */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/30 bg-white/20 backdrop-blur-sm">
-          <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-gray-600/30 bg-gray-800/20' : 'border-white/30 bg-white/20'} backdrop-blur-sm`}>
+          <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
             <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
             OKX Copilot Chat
           </div>
-          <div className="text-xs sm:text-sm text-gray-500 font-mono truncate max-w-[120px] sm:max-w-xs">
+          <div className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-mono truncate max-w-[120px] sm:max-w-xs`}>
             {wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'No wallet'}
           </div>
         </div>
@@ -280,7 +282,8 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
               ) : (
                 <MarkdownMessage 
                   content={msg.text} 
-                  isUser={msg.from === 'user'} 
+                  isUser={msg.from === 'user'}
+                  isDarkMode={isDarkMode}
                 />
               )}
             </div>
@@ -289,7 +292,7 @@ function Chat({ wallet, externalMessage, onExternalMessageHandled }) {
         </div>
         
         {/* Chat Input - Fixed at bottom */}
-        <div className="px-6 py-4 border-t border-white/30 bg-white/20 backdrop-blur-sm">
+        <div className={`px-6 py-4 border-t ${isDarkMode ? 'border-gray-600/30 bg-gray-800/20' : 'border-white/30 bg-white/20'} backdrop-blur-sm`}>
           {/* Test Button for Demo */}
           <div className="mb-2">
             <button
@@ -381,7 +384,7 @@ console.log(portfolio.totalValue);
           </div>
           <form onSubmit={sendMessage} className="flex gap-2">
             <input
-              className="flex-1 border-none text-black rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/80 text-sm shadow"
+              className={`flex-1 border-none rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm shadow ${isDarkMode ? 'bg-gray-700/80 text-white placeholder-gray-400' : 'bg-white/80 text-black placeholder-gray-500'}`}
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="Type your message..."

@@ -51,7 +51,7 @@ const TOKENS = [
   },
 ];
 
-function Portfolio({ wallet, onTokenAction }) {
+function Portfolio({ wallet, onTokenAction, isDarkMode }) {
   const [portfolio, setPortfolio] = useState([]);
   const [totalValue, setTotalValue] = useState(0);
   const [selectedToken, setSelectedToken] = useState(null);
@@ -265,24 +265,24 @@ function Portfolio({ wallet, onTokenAction }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-white via-green-50 to-blue-100">
+    <div className={`flex flex-col h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700' : 'bg-gradient-to-br from-white via-green-50 to-blue-100'}`}>
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/30 bg-white/20 backdrop-blur-sm">
-          <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${isDarkMode ? 'border-gray-600/30 bg-gray-800/20' : 'border-white/30 bg-white/20'} backdrop-blur-sm`}>
+          <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
             <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
             Portfolio
           </div>
-          <div className="text-xs sm:text-sm text-gray-500 font-mono truncate max-w-[120px] sm:max-w-xs">
+          <div className={`text-xs sm:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-mono truncate max-w-[120px] sm:max-w-xs`}>
             {wallet ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : 'No wallet'}
           </div>
         </div>
         {/* Total Value - Sticky */}
-        <div className="sticky top-0 z-10 bg-gradient-to-br from-white via-green-50 to-blue-100 px-6 pt-6 pb-2">
-          <div className="bg-white/80 rounded-xl p-6 shadow-lg border border-white/50">
-            <div className="text-sm text-gray-600 mb-1">Total Portfolio Value</div>
-            <div className="text-3xl font-bold text-gray-900">
-              {loading ? <span className="text-base text-gray-400">Loading...</span> : `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        <div className={`sticky top-0 z-10 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700' : 'bg-gradient-to-br from-white via-green-50 to-blue-100'} px-6 pt-6 pb-2`}>
+          <div className={`${isDarkMode ? 'bg-gray-800/80 border-gray-600/50' : 'bg-white/80 border-white/50'} rounded-xl p-6 shadow-lg border`}>
+            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Total Portfolio Value</div>
+            <div className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              {loading ? <span className={`text-base ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Loading...</span> : `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </div>
             <div className="text-sm text-green-600 mt-1">+2.34% (24h)</div>
           </div>
@@ -290,12 +290,12 @@ function Portfolio({ wallet, onTokenAction }) {
         {/* Portfolio Items - Scrollable */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="space-y-4 pt-4">
-            <div className="text-base font-semibold text-gray-800 mb-4">Holdings (Click to interact)</div>
+            <div className={`text-base font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} mb-4`}>Holdings (Click to interact)</div>
             {portfolio.map(({ symbol, mint, amount, price }) => (
               <div key={mint} className="relative">
                 <div
                   onClick={() => handleTokenClick(mint)}
-                  className="bg-white/80 rounded-xl p-4 shadow-md border border-white/50 hover:shadow-lg transition-all cursor-pointer hover:bg-white/90"
+                  className={`${isDarkMode ? 'bg-gray-800/80 border-gray-600/50 hover:bg-gray-700/90' : 'bg-white/80 border-white/50 hover:bg-white/90'} rounded-xl p-4 shadow-md border hover:shadow-lg transition-all cursor-pointer`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -303,17 +303,17 @@ function Portfolio({ wallet, onTokenAction }) {
                         {symbol.slice(0, 4)}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">{symbol}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{symbol}</div>
+                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           {amount === 0 ? '0' : amount.toFixed(6)} tokens
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-gray-900">
+                      <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         ${(amount * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         ${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
@@ -321,8 +321,8 @@ function Portfolio({ wallet, onTokenAction }) {
                 </div>
                 {/* Action Menu */}
                 {selectedToken === mint && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-20 p-2">
-                    <div className="text-xs text-gray-600 mb-2 px-2">Ask AI about {symbol}:</div>
+                  <div className={`absolute top-full left-0 right-0 mt-2 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} rounded-xl shadow-xl border z-20 p-2`}>
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 px-2`}>Ask AI about {symbol}:</div>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleTokenAction('analyze', symbol, amount, price)}
