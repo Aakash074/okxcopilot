@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { performSwap } from './okxDexApi';
+import React, { useState, useEffect } from 'react';
+import { performSwap, getTokenPrice } from './okxDexApi';
 import { Connection, VersionedTransaction, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
@@ -12,6 +12,7 @@ const connection = new Connection(SOLANA_RPC_ENDPOINT, {
 
 function StrategyCards({ strategies, wallet, onSwapComplete, portfolio }) {
   const [loadingSwaps, setLoadingSwaps] = useState({});
+  const [quotes, setQuotes] = useState({}); // real-time from/to values
 
   const CHAIN_ID = '501'; // Solana mainnet (correct OKX chainId)
   
@@ -35,6 +36,39 @@ function StrategyCards({ strategies, wallet, onSwapComplete, portfolio }) {
     'wBNB': 8,
     'JitoSOL': 9
   };
+
+  // Fetch current quotes for strategies
+  useEffect(() => {
+    async function fetchQuotes() {
+      for (const strategy of strategies) {
+        const actionId = strategy.actionId;
+        if (quotes[actionId]) continue;
+        const decimalsIn = TOKEN_DECIMALS[strategy.fromToken] || 9;
+        let minimalIn;
+        if (strategy.amount.includes('%')) {
+          const pct = parseFloat(strategy.amount) / 100;
+          const bal = portfolio[strategy.fromToken] || 0;
+          minimalIn = (bal * Math.pow(10, decimalsIn) * pct).toString();
+        } else {
+          minimalIn = (parseFloat(strategy.amount) * Math.pow(10, decimalsIn)).toString();
+        }
+        try {
+          const quote = await getTokenPrice({
+            chainId: CHAIN_ID,
+            fromTokenAddress: TOKEN_ADDRESSES[strategy.fromToken],
+            toTokenAddress: TOKEN_ADDRESSES[strategy.toToken],
+            amount: minimalIn
+          });
+          const fromValue = parseFloat(minimalIn) / Math.pow(10, decimalsIn);
+          const toValue = parseFloat(quote.toTokenAmount) / Math.pow(10, TOKEN_DECIMALS[strategy.toToken] || 0);
+          setQuotes(prev => ({ ...prev, [actionId]: { fromValue, toValue } }));
+        } catch (e) {
+          console.warn('Quote failed', strategy.actionId, e);
+        }
+      }
+    }
+    if (portfolio && Object.keys(portfolio).length) fetchQuotes();
+  }, [strategies, portfolio]);
 
   const handleSwap = async (strategy) => {
     if (!wallet || !window.okxwallet?.solana) {
@@ -134,7 +168,7 @@ function StrategyCards({ strategies, wallet, onSwapComplete, portfolio }) {
                   <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     {strategy.fromToken.slice(0, 2)}
                   </div>
-                  <span className="text-xs font-medium">{strategy.fromToken}</span>
+                  <span className="text-xs font-medium text-black">{strategy.fromToken}</span>
                 </div>
                 
                 <div className="text-xs text-gray-400">→</div>
@@ -143,18 +177,30 @@ function StrategyCards({ strategies, wallet, onSwapComplete, portfolio }) {
                   <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                     {strategy.toToken.slice(0, 2)}
                   </div>
-                  <span className="text-xs font-medium">{strategy.toToken}</span>
+                  <span className="text-xs font-medium text-black">{strategy.toToken}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <div>
                   <span className="text-gray-500">Amount: </span>
-                  <span className="font-medium">{strategy.amount}</span>
+                  <span className="font-medium text-black">
+                    {quotes[strategy.actionId]
+                      ? `${quotes[strategy.actionId].fromValue.toLocaleString(undefined,{maximumFractionDigits:6})} ${strategy.fromToken}`
+                      : (strategy.amount.includes('%')
+                          ? `${strategy.amount}`
+                          : `${strategy.amount} ${strategy.fromToken}`)
+                    }
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-500">Est. receive: </span>
-                  <span className="font-medium">{strategy.estimatedToAmount} {strategy.toToken}</span>
+                  <span className="font-medium text-black">
+                    {quotes[strategy.actionId]
+                      ? `${quotes[strategy.actionId].toValue.toLocaleString(undefined,{maximumFractionDigits:6})} ${strategy.toToken}`
+                      : `${strategy.estimatedToAmount} ${strategy.toToken}`
+                    }
+                  </span>
                 </div>
               </div>
             </div>
